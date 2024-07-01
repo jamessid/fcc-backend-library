@@ -7,9 +7,10 @@
  */
 
 "use strict";
-const { body, validationResult } = require("express-validator");
+const { body, param, validationResult } = require("express-validator");
 const asyncHandler = require("express-async-handler");
 const Book = require("../models/book");
+const { checkValidObjectId, checkIdExists } = require("../validators.js");
 
 module.exports = function (app) {
   app
@@ -48,7 +49,7 @@ module.exports = function (app) {
 
     .delete(
       asyncHandler(async function (req, res) {
-        //if successful response will be 'complete delete successful'
+        // total model count, to compare to delete
         const bookCount = await Book.countDocuments({});
         const deleteRes = await Book.deleteMany({});
 
@@ -62,10 +63,21 @@ module.exports = function (app) {
 
   app
     .route("/api/books/:id")
-    .get(function (req, res) {
-      let bookid = req.params.id;
-      //json res format: {"_id": bookid, "title": book_title, "comments": [comment,comment,...]}
-    })
+    .get(
+      // validation
+      param("id").custom(checkValidObjectId).bail().custom(checkIdExists),
+
+      asyncHandler(async function (req, res) {
+        const result = validationResult(req);
+
+        if (!result.isEmpty()) {
+          res.send("no book exists");
+        } else {
+          const book = await Book.findById(req.params.id);
+          res.send(book);
+        }
+      })
+    )
 
     .post(function (req, res) {
       let bookid = req.params.id;
