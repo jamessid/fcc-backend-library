@@ -4,7 +4,7 @@ const Schema = mongoose.Schema;
 const bookSchema = new Schema({
   title: { type: String, required: true },
   comments: [String],
-  commentCount: { type: Number, default: 0 },
+  commentcount: { type: Number, default: 0 },
 });
 
 bookSchema.post("save", async function (doc) {

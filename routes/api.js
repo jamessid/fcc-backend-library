@@ -14,10 +14,13 @@ const Book = require("../models/book");
 module.exports = function (app) {
   app
     .route("/api/books")
-    .get(function (req, res) {
-      //response will be array of book objects
-      //json res format: [{"_id": bookid, "title": book_title, "commentcount": num_of_comments },...]
-    })
+    .get(
+      asyncHandler(async function (req, res) {
+        // find all books
+        const books = await Book.find({}).exec();
+        res.json(books);
+      })
+    )
 
     .post(
       // Validation
@@ -43,9 +46,19 @@ module.exports = function (app) {
       })
     )
 
-    .delete(function (req, res) {
-      //if successful response will be 'complete delete successful'
-    });
+    .delete(
+      asyncHandler(async function (req, res) {
+        //if successful response will be 'complete delete successful'
+        const bookCount = await Book.countDocuments({});
+        const deleteRes = await Book.deleteMany({});
+
+        if (bookCount === deleteRes.deletedCount) {
+          res.send("complete delete successful");
+        } else {
+          res.send("warning: complete delete unsuccessful");
+        }
+      })
+    );
 
   app
     .route("/api/books/:id")
