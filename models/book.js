@@ -3,8 +3,12 @@ const Schema = mongoose.Schema;
 
 const bookSchema = new Schema({
   title: { type: String, required: true },
-  comments: { type: Array },
-  commentCount: [String],
+  comments: [String],
+  commentCount: { type: Number, default: 0 },
+});
+
+bookSchema.post("save", async function (doc) {
+  console.log(`${doc.comments.length} comments in this doc.`);
 });
 
 module.exports = mongoose.model("Book", bookSchema);
