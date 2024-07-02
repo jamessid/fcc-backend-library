@@ -116,8 +116,26 @@ module.exports = function (app) {
       })
     )
 
-    .delete(function (req, res) {
-      let bookid = req.params.id;
-      //if successful response will be 'delete successful'
-    });
+    .delete(
+      // validation
+      param("id", "invalid id")
+        .custom(checkValidObjectId)
+        .bail()
+        .custom(checkIdExists),
+
+      asyncHandler(async function (req, res) {
+        const result = validationResult(req);
+
+        if (!result.isEmpty()) {
+          res.send("no book exists");
+        } else {
+          const deletedBook = await Book.deleteOne({ _id: req.params.id });
+          if (deletedBook.deletedCount === 1) {
+            res.send("delete successful");
+          } else {
+            res.send("could not delete");
+          }
+        }
+      })
+    );
 };
