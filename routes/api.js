@@ -79,11 +79,42 @@ module.exports = function (app) {
       })
     )
 
-    .post(function (req, res) {
-      let bookid = req.params.id;
-      let comment = req.body.comment;
-      //json res format same as .get
-    })
+    .post(
+      // validation
+      param("id", "invalid id")
+        .custom(checkValidObjectId)
+        .bail()
+        .custom(checkIdExists),
+      body("comment", "must provide comment").exists({ values: "falsy" }),
+
+      asyncHandler(async function (req, res) {
+        const result = validationResult(req);
+
+        const errorPaths = result.formatWith((error) => error.path).array();
+
+        // deal with validation errors
+        if (!result.isEmpty()) {
+          if (errorPaths.includes("comment")) {
+            res.send("missing required field comment");
+          } else if (errorPaths.includes("id")) {
+            res.send("no book exists");
+          } else {
+            res.send("could not update.");
+          }
+        } else {
+          // req is all good.
+          // find doc on which to comment
+          const doc = await Book.findById(req.params.id);
+          // add comment and update commentcount
+          doc.comments.push(req.body.comment);
+          doc.commentcount = doc.comments.length;
+
+          // save and respond with updated doc
+          await doc.save();
+          res.send(doc);
+        }
+      })
+    )
 
     .delete(function (req, res) {
       let bookid = req.params.id;
